@@ -76,7 +76,6 @@ HR leaders need rigorous, data‐driven guidance on which job benefits to offer 
 * **Back‐door Adjustment**: DAG‐guided confounder selection was essential to avoid omitted‐variable bias.
 * **Overlap & Balance**: Poor overlap in some sectors increased variance of IPW; trimming and DR‐Learner improved precision.
 * **Method Complementarity**: IPW, DR‐Learner, and Causal Forests yielded consistent ATEs, balancing bias and variance trade‐offs.
-* **Reproducibility**: Capturing package versions via `sessionInfo()` and `requirements.txt` enabled teammates to reproduce results exactly.
 
 ---
 
