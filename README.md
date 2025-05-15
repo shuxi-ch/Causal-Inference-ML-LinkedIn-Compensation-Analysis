@@ -49,7 +49,7 @@ HR leaders need rigorous, data‐driven guidance on which job benefits to offer 
 
 ---
 
-### Methodology / Approach
+### Methodology
 
 1. **Data Preparation** (`notebooks/01_data_preparation.ipynb` / `src/data_preparation.py`)
 
@@ -79,7 +79,7 @@ HR leaders need rigorous, data‐driven guidance on which job benefits to offer 
 
 ---
 
-### Next Steps / Future Enhancements
+### Future Enhancements
 
 * Extend causal questions to hiring speed and applicant volume metrics.
 * Integrate synthetic controls for evolving markets.
