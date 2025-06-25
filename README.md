@@ -1,8 +1,28 @@
-# LinkedIn Compensation Causal Analysis
+# LinkedIn Job Postings: Estimating the Causal Effects of Benefits and Experience on Job Outcomes
 
 ### Overview
 
-This project applies structural causal inference and machine‐learning estimators to \~50 000 LinkedIn job postings to quantify how benefits offerings and experience requirements causally affect posted compensation. Guided by a DAG for back–door adjustment, we estimate average and heterogeneous treatment effects using IPW, doubly‐robust learners, and Causal Forests—revealing that each extra benefit adds \$3 000 and each additional year of experience adds \$1 200 to salary.
+This project conducts two quasi-experimental studies on a dataset of \~50,000 LinkedIn job postings to estimate how **remote work offerings** and **required experience levels** causally affect **applicant engagement** and **posted compensation**, respectively. Using **directed acyclic graphs (DAGs)** to guide identification strategies, each study applies a tailored causal inference pipeline, including **Propensity Score Matching (PSM)**, **meta-learners (X-learner, R-learner)**, and **causal mediation analysis**.
+
+We estimate **ATEs** and **CATEs**, and visualize results using **SHAP values**, **uplift curves**, and **partial dependence plots**, offering a nuanced view of treatment heterogeneity and causal mechanisms.
+
+---
+
+### **Key Policy Takeaways**
+
+#### **1. Remote Work Policies Expand Talent Reach**
+
+* Remote-friendly postings **causally increase applicant engagement**, especially in mid-level tech and marketing roles.
+* Effects are **heterogeneous**—greater impact in jobs from smaller firms and non-central locations.
+
+> **Implication**: Remote flexibility is a low-cost, high-return lever for firms aiming to **broaden their talent pool** without raising salaries.
+
+#### **2. Experience Requirements Signal and Distort Compensation**
+
+* Each year of required experience **increases salary**, but **nonlinearly**—with diminishing returns beyond mid-level.
+* Mediation analysis reveals that **title inflation** (e.g., "Senior") accounts for a substantial portion of this effect.
+
+> **Implication**: Firms may use job titles and experience thresholds to **manipulate wage expectations** or signal quality, potentially exacerbating **wage compression**.
 
 ---
 
@@ -30,44 +50,89 @@ This project applies structural causal inference and machine‐learning estimato
                             
 ```
 
----
-
 ### Problem Statement
 
-HR leaders need rigorous, data‐driven guidance on which job benefits to offer and how experience requirements translate into pay premiums. Raw comparisons conflate confounding factors—industry, company size, location—making it impossible to isolate causal effects. This project estimates the true average and heterogeneous treatment effects of benefits count and experience years on posted compensation, informing benefit design and salary benchmarking.
+HR leaders and job seekers alike face a central question: which job attributes actually *cause* higher applicant engagement and compensation? Raw comparisons can be misleading due to confounding factors like industry, company size, and geographic location. This project applies modern causal inference techniques to a rich dataset of \~50,000 LinkedIn job postings to estimate the **true average and heterogeneous treatment effects** of:
+
+* **Remote Work Availability** on **application engagement**, and
+* **Experience Requirements** on **posted salary**
+
+Our findings help:
+
+* **HR professionals** design competitive compensation packages and attract talent.
+* **Job seekers** understand what attributes matter most to pay and visibility.
 
 ---
 
 ### Data Sources
 
-* **Kaggle “LinkedIn Job Postings”** (≈50 000 records): JSON/CSV with job titles, company info, listed benefits, required experience, location, salary ranges, and more.
-* **Derived Features**:
-
-  * **Benefits Count** (number of listed perks: health, remote, 401k, etc.)
-  * **Years of Experience** (parsed from job description)
-  * **Confounders**: industry sector, company size category, geographic region
+* **Kaggle Dataset**: [LinkedIn Job Postings (\~50K records after our processing)](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings)
+* Structured across 11 CSV files, including job descriptions, company details, perks, salary, experience level, and metadata (\~68 features).
 
 ---
 
 ### Methodology
 
-1. **Data Preparation** (`notebooks/01_data_preparation.ipynb` / `src/data_preparation.py`)
+This project was implemented across two quasi-experimental studies using Python, `econml`, `causalml`, and `DoWhy`. Each study follows a full pipeline from data cleaning and feature extraction to robust causal inference and interpretability.
 
-   * Flattened nested JSON into tabular form; imputed missing salaries; log‐transformed skewed features; encoded categorical variables; extracted benefits and experience indicators.
-2. **DAG Specification** (`02_causal_ml.ipynb`)
+###### 1. Data Preparation and Feature Engineering
 
-   * Mapped treatments (benefits count, experience years), outcome (salary), and confounders (industry, company size, location) in a Directed Acyclic Graph to justify back-door adjustment.
-3. **Propensity-Score Modeling** (`src/causal_analysis.py`)
+* Merged and flattened data across multiple files.
+* Parsed job descriptions using NLP (spaCy) to extract **years of experience**.
+* Created binary and count indicators for **benefits** (e.g., health, dental, remote, 401k).
+* Identified **confounders**: industry, location, seniority, company size.
+* Imputed missing salaries using group medians by job type and location.
+* Log-transformed salary to correct skewness.
 
-   * Fitted logistic regressions for each treatment on confounders; checked overlap and covariate balance pre‐ and post‐weighting.
-4. **Causal Estimation**
+###### 2. Causal Graph Specification (DAG)
 
-   * **IPW**: Inverse‐probability weighting to compute ATEs.
-   * **Doubly‐Robust Learner**: Combined propensity scores with outcome models via EconML’s DR‐Learner.
-   * **Causal Forests**: Estimated heterogeneous treatment effects across industries and locations.
-5. **Sensitivity Analysis**
+* Defined causal structure via **Directed Acyclic Graphs (DAGs)** for each study.
+* Treatments:
 
-   * Rosenbaum bounds and placebo‐treatment tests to assess robustness to unobserved confounding.
+  * Study 1: Remote Work (binary)
+  * Study 2: Experience Years (continuous)
+* Outcomes:
+
+  * Study 1: Application count
+  * Study 2: Posted salary
+* Confounders: industry, location, company size, job level, and sector.
+* DAGs guided the choice of adjustment variables for valid identification.
+
+###### 3. Propensity Score Modeling and Matching
+
+* Trained logistic regression models for binary treatments.
+* Applied **Propensity Score Matching (PSM)** to form balanced samples.
+* Checked covariate overlap using histograms and **standardized mean difference (SMD)** plots.
+
+###### 4. Causal Effect Estimation
+
+**Study 1: Remote Work → Applicant Engagement**
+
+* Applied **X-Learner** to estimate Conditional Average Treatment Effects (CATEs).
+* Benchmarked with **Inverse Probability Weighting (IPW)**, **Doubly Robust Learner (DR-Learner)**, and **Causal Forests**.
+
+**Study 2: Required Experience → Posted Salary**
+
+* Used **R-Learner** for flexible CATE estimation.
+* Performed **Causal Mediation Analysis** to decompose:
+
+  * **Direct Effects** of experience
+  * **Indirect Effects** through **job title inflation** (e.g., adding "Senior").
+
+###### 5. Sensitivity and Robustness Checks
+
+* **Rosenbaum Bounds**: tested robustness against hidden bias from unobserved confounders.
+* **Placebo Tests**: tested for false positives by reassigning treatments randomly.
+* **Threshold Sensitivity**: varied experience cutoffs to test model stability.
+
+###### 6. Interpretability and Visualization
+
+* Used **SHAP values** to explain individual prediction contributions.
+* Visualized causal findings via:
+
+  * **Uplift Curves** (showing net lift per segment)
+  * **Partial Dependence Plots (PDPs)**
+  * **CATE distributions** across industries and job types
 
 ---
 
@@ -77,9 +142,3 @@ HR leaders need rigorous, data‐driven guidance on which job benefits to offer 
 * **Overlap & Balance**: Poor overlap in some sectors increased variance of IPW; trimming and DR‐Learner improved precision.
 * **Method Complementarity**: IPW, DR‐Learner, and Causal Forests yielded consistent ATEs, balancing bias and variance trade‐offs.
 
----
-
-### Future Enhancements
-
-* Extend causal questions to hiring speed and applicant volume metrics.
-* Integrate synthetic controls for evolving markets.
